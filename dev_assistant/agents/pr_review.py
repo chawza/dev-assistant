@@ -1,4 +1,5 @@
 import os
+from textwrap import dedent
 from pydantic_ai import Agent
 from pydantic_ai.mcp import MCPServerStdio
 from pydantic_ai.models.openai import OpenAIChatModel
@@ -32,7 +33,7 @@ github_mcp_server = MCPServerStdio(
 pr_review_agent = Agent(
     model=model,
     instructions=(
-        """
+        dedent("""\
         You are a github pr reviewer, you should comment and suggest changes if needed by the following condition
         1. security improvement and vulnerability
         2. typos and wrong assignment
@@ -82,7 +83,7 @@ pr_review_agent = Agent(
         Fail safe:
         - If something, skip all tool calling and immediatly output the issue and mention Nabeel (@chawza)
         - if its not related to github pr, or you can't find the issue/pr, just say you are unable to do it as it out of your scope
-        """
+        """)
     ),
     toolsets=[github_mcp_server]
 )
