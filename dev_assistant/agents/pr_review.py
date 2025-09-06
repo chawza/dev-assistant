@@ -27,7 +27,7 @@ github_mcp_server = MCPServerStdio(
     timeout=10
 )
 
-agent = Agent(
+pr_review_agent = Agent(
     model=model,
     instructions=(
         """

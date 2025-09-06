@@ -1,6 +1,6 @@
 import asyncio
 import typer
-from dev_assistant.agent import agent as pr_review_agent
+from dev_assistant.agents.pr_review import pr_review_agent
 
 
 app = typer.Typer()
