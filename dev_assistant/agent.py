@@ -1,4 +1,3 @@
-import asyncio
 import os
 from pydantic_ai import Agent
 from pydantic_ai.mcp import MCPServerStdio
@@ -84,11 +83,3 @@ agent = Agent(
     ),
     toolsets=[github_mcp_server]
 )
-
-async def main(user_prompt: str):
-    result = await agent.run(user_prompt=user_prompt)
-    debug(result)
-
-
-if __name__ == "__main__":
-    asyncio.run(main(user_prompt="please review this <pr_url>"))
