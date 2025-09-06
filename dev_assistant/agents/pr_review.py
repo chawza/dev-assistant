@@ -5,7 +5,7 @@ from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
 model = OpenAIChatModel(
-    model_name="x-ai/grok-code-fast-1",
+    model_name=os.environ['OPENROUTER_REVIEWER_MODEL'],
     provider=OpenRouterProvider(api_key=os.environ['OPENROUTER_API_KEY']),
 )
 
