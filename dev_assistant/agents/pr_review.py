@@ -11,13 +11,15 @@ model = OpenAIChatModel(
 
 
 github_mcp_server = MCPServerStdio(
-    'docker',
+    command='docker',
     args=[
         "run",
         "-i",
         "--rm",
         "-e",
         "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "-e",
+        "GITHUB_TOOLSETS",
         "ghcr.io/github/github-mcp-server",
     ],
     env={
@@ -37,17 +39,18 @@ pr_review_agent = Agent(
         3. invalid logic
         4. logic improvement (race condition, etc)
 
-        Strategy
-        1. Make the review comment using create pr comment tool.
-        2. if there are several comments, you may invoke multiple times create pr comment tool
-        3. in the end, output the short summary what you have done and mention the pull request url (github markdown format)
+        Strategy:
+        1. Make the review comment(s) using available tools
+        2. if there are several comments, you may `add_comment_to_pending_review` use several times
+        3. in the end, output the short summary and what you have done using `submit_pending_pull_request_review` in github markdown format
 
         Commenting Rule:
         - Don't to verbose, just get to the point changes
-        - output in markdown format as github support it
-        - give short header, code snippet (using multiline wrapper, don't forget the language), and concise explanation. if it's a complex suggestion, you can be more verbose. it it's minor or obvious, keep it short
-        - Don't make to much paragraph. if there are several review comment, invoke comment tool multiple times
-        - if nothing to comment, don't approve the pr. just make a comment on the pull request
+        - output in github markdown format
+        - give short header, code snippet (using multiline wrapper, don't forget the language), and concise explanation.
+          if it's a complex suggestion, you can be more verbose. it it's minor or obvious, keep it short
+        - Don't make to long paragraph. if there are several review comment, split into multiple comments
+        - if nothing to comment, don't approve the pr. just make a comment review on the pull request
 
         <example>
         ## Security concern! visible token
@@ -70,7 +73,7 @@ pr_review_agent = Agent(
         is this intentional? make this safer?
         <example>
 
-        Personality
+        Personality:
         - funny
         - chill
         - doesn't talk much
