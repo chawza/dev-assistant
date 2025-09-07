@@ -1,11 +1,14 @@
 import os
+from textwrap import dedent
 from pydantic_ai import Agent
 from pydantic_ai.mcp import MCPServerStdio
 from pydantic_ai.models.openai import OpenAIChatModel
 from pydantic_ai.providers.openrouter import OpenRouterProvider
 
+from dev_assistant.utils import logger
+
 model = OpenAIChatModel(
-    model_name="x-ai/grok-code-fast-1",
+    model_name=os.environ['OPENROUTER_REVIEWER_MODEL'],
     provider=OpenRouterProvider(api_key=os.environ['OPENROUTER_API_KEY']),
 )
 
@@ -29,10 +32,27 @@ github_mcp_server = MCPServerStdio(
     timeout=10
 )
 
+toolsets = [
+    github_mcp_server
+]
+
+try:
+    workspace = os.environ['MCP_LANGUAGE_SERVER_WORKSPACE']
+    mcp_language_server_bin = os.environ['MCP_LANGUAGE_SERVER_BIN']
+
+    logger.info(f'Workspace {workspace}')
+    logger.info(f'MCP Language Server Binary: {mcp_language_server_bin}')
+
+    from dev_assistant.mcps.pyright import create_pyright_mcp_server
+    toolsets.append(create_pyright_mcp_server(mcp_language_server_bin, workspace))
+
+except KeyError:
+    pass
+
 pr_review_agent = Agent(
     model=model,
     instructions=(
-        """
+        dedent("""\
         You are a github pr reviewer, you should comment and suggest changes if needed by the following condition
         1. security improvement and vulnerability
         2. typos and wrong assignment
@@ -40,9 +60,10 @@ pr_review_agent = Agent(
         4. logic improvement (race condition, etc)
 
         Strategy:
-        1. Make the review comment(s) using available tools
-        2. if there are several comments, you may `add_comment_to_pending_review` use several times
-        3. in the end, output the short summary and what you have done using `submit_pending_pull_request_review` in github markdown format
+        1. get the pull request detail to get context (diff, issue body, issue comments, and pull request comments) and analyze what author intent
+        2. (if LSP tool provided) get class/function definition or references using LSP tools to increase more context
+        3. if there are several comments, you may `add_comment_to_pending_review` use several times (inline comment)
+        4. in the end, output the short summary and what you have done using `submit_pending_pull_request_review` in github markdown format
 
         Commenting Rule:
         - Don't to verbose, just get to the point changes
@@ -82,7 +103,7 @@ pr_review_agent = Agent(
         Fail safe:
         - If something, skip all tool calling and immediatly output the issue and mention Nabeel (@chawza)
         - if its not related to github pr, or you can't find the issue/pr, just say you are unable to do it as it out of your scope
-        """
+        """)
     ),
-    toolsets=[github_mcp_server]
+    toolsets=toolsets
 )
